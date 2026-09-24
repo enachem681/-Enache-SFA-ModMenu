@@ -1,0 +1,47 @@
+name: Build Local iOS Demo
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build ARM64 iOS app
+        run: |
+          set -euxo pipefail
+
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+
+          mkdir -p build/Payload/EnacheLocalDemo.app
+
+          xcrun clang \
+            -target arm64-apple-ios15.0 \
+            -isysroot "$SDK" \
+            -fobjc-arc \
+            -fmodules \
+            main.m \
+            -framework UIKit \
+            -framework Foundation \
+            -framework QuartzCore \
+            -o build/Payload/EnacheLocalDemo.app/EnacheLocalDemo
+
+          cp Info.plist build/Payload/EnacheLocalDemo.app/Info.plist
+
+          file build/Payload/EnacheLocalDemo.app/EnacheLocalDemo
+
+          cd build
+          zip -r EnacheLocalMenuDemo-unsigned.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Enache-Local-Menu-Demo
+          path: build/EnacheLocalMenuDemo-unsigned.ipa
