@@ -1,0 +1,38 @@
+workflows:
+  enache-ios-demo:
+    name: Enache Local iOS Demo
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+
+    environment:
+      xcode: latest
+
+    scripts:
+      - name: Build unsigned iOS app
+        script: |
+          set -euxo pipefail
+
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+
+          mkdir -p build/Payload/EnacheLocalDemo.app
+
+          xcrun clang \
+            -target arm64-apple-ios15.0 \
+            -isysroot "$SDK" \
+            -fobjc-arc \
+            -fmodules \
+            main.m \
+            -framework UIKit \
+            -framework Foundation \
+            -framework QuartzCore \
+            -o build/Payload/EnacheLocalDemo.app/EnacheLocalDemo
+
+          cp Info.plist build/Payload/EnacheLocalDemo.app/Info.plist
+
+          chmod +x build/Payload/EnacheLocalDemo.app/EnacheLocalDemo
+
+          cd build
+          zip -qry EnacheLocalMenuDemo-unsigned.ipa Payload
+
+    artifacts:
+      - build/EnacheLocalMenuDemo-unsigned.ipa
